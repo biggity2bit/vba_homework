@@ -1,0 +1,205 @@
+Sub wolfenStock():
+
+Dim ws As Worksheet
+
+For Each ws In ActiveWorkbook.Worksheets
+
+ws.Activate
+
+
+'Variable to hold whatever the ticker name is
+Dim ticker_name As String
+
+'Variable to hold the row for placing ticker names and data in new range, set to row 2 by default
+Dim ticker_Location As Double
+ticker_Location = 2
+
+lastrow = Cells(Rows.Count, 1).End(xlUp).Row 'This lets me count to the last row
+
+'Now, loop through the data and collect TICKER NAMES, writing them to the new table
+For i = 2 To lastrow
+
+'If the cells are different, then update ticker_name with whatever is in the row and cell we want
+If Cells(i + 1, 1).Value <> Cells(i, 1).Value Then
+ticker_name = Cells(i, 1).Value
+
+'then I need to write ticker_name to my new location
+Cells(ticker_Location, 9).Value = ticker_name
+
+'Now update the value of the row where the next ticker name gets printed
+ticker_Location = ticker_Location + 1
+End If
+Next i
+
+
+Dim open_Price As Double
+open_Price = 0
+
+Dim close_Price As Double
+close_Price = 0
+
+Dim year_Change As Single
+year_Change = 0
+
+Dim year_Change_Location As Single
+year_Change_Location = 2
+
+
+'Now, loop through the data and collect YEARLY CHANGE, writing them to the new table
+For i = 2 To lastrow
+
+' Compares two cells, and if they are different, logs the OPEN price variable
+If Cells(i, 1).Value <> Cells(i - 1, 1).Value Then
+open_Price = Cells(i, 3).Value
+End If
+
+
+'MsgBox (open_Price)
+' Ends the open_Price if statement, so we can figure out the close_Price variable
+' Compares two cells, and if they are different, logs the CLOSE price variable
+' NOTE - the cells being compared are different (i - 1) vs (i + 1); this is how
+' we can capture the opening day value vs the last value before you go to a different stock
+If Cells(i + 1, 1).Value <> Cells(i, 1).Value Then
+close_Price = Cells(i, 6).Value
+year_Change = open_Price - close_Price
+
+'then I need to write year_Change to my new location
+Cells(year_Change_Location, 10).Value = year_Change
+
+'Now update the value of the row where the next year_Change gets printed
+year_Change_Location = year_Change_Location + 1
+End If
+Next i
+
+
+Dim percent_Change As Double
+percent_Change = 0
+
+Dim percent_ChangeLocation As Single
+percent_ChangeLocation = 2
+
+
+'Now, loop through the data and collect PERCENT CHANGE, writing them to the new table
+For i = 2 To lastrow
+
+' Compares two cells, and if they are different, logs the OPEN price variable
+If Cells(i, 1).Value <> Cells(i - 1, 1).Value Then
+open_Price = Cells(i, 3).Value
+End If
+
+
+'MsgBox (open_Price)
+' Ends the open_Price if statement, so we can figure out the close_Price variable
+' Compares two cells, and if they are different, logs the CLOSE price variable
+' NOTE - the cells being compared are different (i - 1) vs (i + 1); this is how
+' we can capture the opening day value vs the last value before you go to a different stock
+If Cells(i + 1, 1).Value <> Cells(i, 1).Value Then
+close_Price = Cells(i, 6).Value
+
+' We do the calculation to find the percent change
+percent_Change = open_Price / close_Price - 1
+
+'then I need to write percent_Change to my new location
+Cells(percent_ChangeLocation, 11).Value = percent_Change
+
+'Now update the value of where the next percent_Change gets printed
+percent_ChangeLocation = percent_ChangeLocation + 1
+
+percent_Change = 0
+
+End If
+Next i
+
+
+Dim total_Volume As Double
+total_Volume = 0
+
+Dim total_VolumeLocation As Single
+total_VolumeLocation = 2
+
+
+'Now, loop through the data and collect TOTAL VOLUME, writing them to the new table
+For i = 2 To lastrow
+
+' Compares two cells, and if they are the same, then takes the existing
+' total_Volume (which is zero), and adds to it the volume found in the corresponding cell.
+' When it moves to the next row, it takes the newly updated total_Volume and adds to it
+' the volume in the corresponding cell.
+
+If Cells(i, 1).Value = Cells(i + 1, 1).Value Then
+total_Volume = total_Volume + Cells(i, 7)
+
+
+'MsgBox (total_Volume)
+' If the the above IF statement is FALSE, then we go to this ELSEIF statement.
+' Essentially it's trying to capture the correct last value to add to total_Volume.
+' I wasn't sure how to do this, so I used the AND statement to combine two logic arguments together.
+' Essentially, if all three cells being compared (i, i + 1, and i + 2) are the same, it won't
+' record any data, and it moves to writing the total_Volume variable. There is only one case
+' where the arguments are valid, and that is the last volume cell we need to add to total_Volume.
+
+ElseIf Cells(i, 1).Value <> Cells(i + 1, 1).Value And Cells(i + 1, 1).Value = Cells(i + 2, 1).Value Then
+total_Volume = total_Volume + Cells(i, 7)
+
+' Writes total_Volume to the location and row we want
+Cells(total_VolumeLocation, 12).Value = total_Volume
+
+' Updates the row location by 1
+total_VolumeLocation = total_VolumeLocation + 1
+
+' Resets total_Volume to zero, so that we can begin on the next stock's volume
+total_Volume = 0
+End If
+Next i
+
+
+Range("I1").Value = "Ticker"
+Range("I1").WrapText = True
+
+Range("J1").Value = "Yearly Change"
+Range("J1").WrapText = True
+
+Range("K1").Value = "Percent Change"
+Range("K1").WrapText = True
+
+Range("L1").Value = "Total Stock Volume"
+Range("L1").WrapText = True
+
+For i = 2 To lastrow
+Range("J" & i).NumberFormat = "0.00"
+Range("K" & i).NumberFormat = "0.00%"
+
+If Range("J" & i).Value > 0 Then
+Range("J" & i).Interior.ColorIndex = 4
+
+ElseIf Range("J" & i).Value < 0 Then
+Range("J" & i).Interior.ColorIndex = 3
+
+End If
+Next i
+
+
+Range("O2").Value = "Greatest % Increase"
+Range("O3").Value = "Greatest % Decrease"
+Range("O4").Value = "Greatest Total Volume"
+
+Dim max_perc As Double
+Dim min_perc As Double
+Dim max_volume As Double
+
+For i = 2 To lastrow
+max_perc = WorksheetFunction.max(Range("K" & i))
+
+Range("Q2") = max_perc
+
+min_perc = WorksheetFunction.min(Range("K" & i))
+
+Range("Q3") = min_perc
+
+max_volume = WorksheetFunction.max(Range("K" & i))
+
+Range("Q4") = max_volume
+Next i
+
+Next ws
+End Sub
